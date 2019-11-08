@@ -2,6 +2,7 @@ import pygame
 from pygame.locals import *
 
 from random import choice, randint
+import sys
 
 pygame.init()
 
@@ -26,7 +27,11 @@ pygame.display.set_caption("wow thats a mazing")
 # holy cow this is fun
 def first_draft():
     maze = blank_sheet()
-    ent, ext = (4, 4), (W-4, H-4)
+    ent = randint(0, W), randint(0, H)
+    ext = randint(0, W), randint(0, H)
+    while abs(ext[0] - ent[0]) + abs(ext[1] - ent[1]) < (W + H) / 2:
+        ext = randint(0, W), randint(0, H)
+        ent = randint(0, W), randint(0, H)
     heads = [ent]
     routes = {ent: [ent]}
     marked = []
@@ -53,8 +58,42 @@ def first_draft():
                         maze[y][x][d] = 0
                 else: maze[y][x][d] = 0
         marked.append((x, y))
-    return drawn_maze(maze, ent, ext, route=routes[ext])
+    return maze, ent, ext, routes[ext]
 
+def second_draft(): # no pass lines
+    maze = blank_sheet()
+    ent, ext = (4, 4), (W-4, H-4)
+    heads = [ent]
+    routes = {ent: [ent]}
+    marked = []
+
+    no_pass = {} # store lines as (start position): (end position)
+
+    
+    while ext not in heads:
+        if not heads:
+            heads.append(choice(marked))
+        x, y = heads.pop(0)
+        route = routes[(x, y)]
+        exits = maze[y][x]
+
+        n = choice([2, 2, 3, 4])
+        while sum(exits) < n:
+            maze[y][x][randint(0, 3)] = 1
+
+        for d, check in enumerate(exits):
+            if check:
+                x_, y_ = apply_direction(x, y, d)
+                if x_ >= 0 and y_ >= 0 and x_ < W and y_ < H:
+                    if (x_, y_) not in heads and (x_, y_) not in marked:
+                        maze[y_][x_][(d + 2) % 4] = 1
+                        heads.append((x_, y_))
+                        routes[(x_, y_)] = route + [(x_, y_)]
+                    elif maze[y_][x_][(d + 2) % 4] == 0:
+                        maze[y][x][d] = 0
+                else: maze[y][x][d] = 0
+        marked.append((x, y))
+    return maze, ent, ext, routes[ext]
 # # # # # # # # # # # # # # # # # # # # #
 
 def issolvable(maze, ent, ext):
@@ -107,10 +146,22 @@ def drawn_maze(maze, ent, ext, route=None):
 
 ############ MAIN LOOP #############
 x, y = 0, 0
-img = first_draft()
+maze, ent, ext, route = first_draft()
+show = False
+zoom = [8, 16, 32, 64]
+zidx = 2
+img = drawn_maze(maze, ent, ext)
+rimg = drawn_maze(maze, ent, ext, route=route )
 while True:
+    if PW != zoom[zidx]:
+        PW = zoom[zidx]
+        img = drawn_maze(maze, ent, ext)
+        rimg = drawn_maze(maze, ent, ext, route=route )
     SCREEN.fill((0, 0, 0))
-    SCREEN.blit(img, (x*PW, y*PW))
+    if show:
+        SCREEN.blit(rimg, (x*PW, y*PW))
+    else:
+        SCREEN.blit(img, (x*PW, y*PW))
     pygame.display.update()
     for e in pygame.event.get():
         if e.type == QUIT: quit()
@@ -123,3 +174,11 @@ while True:
                 y += 1
             if e.key == K_DOWN:
                 y -= 1
+
+            if e.key == K_z:
+                zidx = (zidx + 1) % 4
+            if e.key == K_x:
+                zidx = (zidx - 1) % 4
+                
+            if e.key == K_SPACE:
+                show = (show + 1) % 2
