@@ -15,11 +15,11 @@ a maze will be a multi dimensional array
 each cell in the array will be four bools representing the four exits of that cell
 [N, E, S, W]
 """
-
-SCREEN = pygame.display.set_mode((640, 480))
-pygame.display.set_caption("wow thats a mazing")
 PW = 32
 W, H = 40, 40
+
+SCREEN = pygame.display.set_mode((PW * 40, PW * 20))
+pygame.display.set_caption("wow thats a mazing")
 
 
 # ** ** ** ** THE ALGORITHMS ** ** ** **
@@ -30,7 +30,9 @@ def first_draft():
     heads = [ent]
     routes = {ent: [ent]}
     marked = []
-    while ext not in heads and heads:
+    while ext not in heads:
+        if not heads:
+            heads.append(choice(marked))
         x, y = heads.pop(0)
         route = routes[(x, y)]
         exits = maze[y][x]
@@ -38,19 +40,20 @@ def first_draft():
         n = choice([2, 2, 3, 4])
         while sum(exits) < n:
             maze[y][x][randint(0, 3)] = 1
-    
+
         for d, check in enumerate(exits):
             if check:
                 x_, y_ = apply_direction(x, y, d)
-                if x_ > 0 and y_ > 0 and x_ < W and y_ < H:
+                if x_ >= 0 and y_ >= 0 and x_ < W and y_ < H:
                     if (x_, y_) not in heads and (x_, y_) not in marked:
                         maze[y_][x_][(d + 2) % 4] = 1
                         heads.append((x_, y_))
                         routes[(x_, y_)] = route + [(x_, y_)]
-                else:
-                    maze[y][x][d] = 0
+                    elif maze[y_][x_][(d + 2) % 4] == 0:
+                        maze[y][x][d] = 0
+                else: maze[y][x][d] = 0
         marked.append((x, y))
-    return drawn_maze(maze, ent, ext)
+    return drawn_maze(maze, ent, ext, route=routes[ext])
 
 # # # # # # # # # # # # # # # # # # # # #
 
@@ -79,24 +82,27 @@ def blank_sheet():
             maze[-1].append([0, 0, 0, 0])
     return maze
 
-def drawn_maze(maze, ent, ext):
+def drawn_maze(maze, ent, ext, route=None):
     surf = pygame.Surface((len(maze[0])*PW, len(maze)*PW))
     for Y, line in enumerate(maze):
         for X, cell in enumerate(line):
+            col = (255, 255, 255)
             if (X, Y) == ent:
-                pygame.draw.rect(surf, (0, 0, 255), pygame.rect.Rect((X*PW + 2, Y*PW + 2), (PW - 4, PW - 4)))
+                col = (0, 0, 255)
             elif (X, Y) == ext:
-                pygame.draw.rect(surf, (0, 255, 0), pygame.rect.Rect((X*PW + 2, Y*PW + 2), (PW - 4, PW - 4)))
-            else:
-                pygame.draw.rect(surf, (255, 255, 255), pygame.rect.Rect((X*PW + 2, Y*PW + 2), (PW - 4, PW - 4)))
+                col = (0, 255, 0)
+            elif route and (X, Y) in route:
+                col = (255, 0, 0)
+            if sum(cell):
+                pygame.draw.rect(surf, col, pygame.rect.Rect((X*PW + 2, Y*PW + 2), (PW - 4, PW - 4)))
             if cell[0]:
-                pygame.draw.rect(surf, (255, 255, 255), pygame.rect.Rect((X*PW + 2, Y*PW), (PW - 4, 2)))
+                pygame.draw.rect(surf, col, pygame.rect.Rect((X*PW + 2, Y*PW), (PW - 4, 2)))
             if cell[1]:
-                pygame.draw.rect(surf, (255, 255, 255), pygame.rect.Rect((X*PW + (PW - 2), Y*PW + 2), (2, PW - 4)))
+                pygame.draw.rect(surf, col, pygame.rect.Rect((X*PW + (PW - 2), Y*PW + 2), (2, PW - 4)))
             if cell[2]:
-                pygame.draw.rect(surf, (255, 255, 255), pygame.rect.Rect((X*PW + 2, Y*PW + (PW - 2)), (PW - 4, 2)))
+                pygame.draw.rect(surf, col, pygame.rect.Rect((X*PW + 2, Y*PW + (PW - 2)), (PW - 4, 2)))
             if cell[3]:
-                pygame.draw.rect(surf, (255, 255, 255), pygame.rect.Rect((X*PW, Y*PW + 2), (2, PW - 4)))
+                pygame.draw.rect(surf, col, pygame.rect.Rect((X*PW, Y*PW + 2), (2, PW - 4)))
     return surf
 
 ############ MAIN LOOP #############
@@ -110,10 +116,10 @@ while True:
         if e.type == QUIT: quit()
         if e.type == KEYDOWN:
             if e.key == K_RIGHT:
-                x += 1
-            if e.key == K_LEFT:
                 x -= 1
+            if e.key == K_LEFT:
+                x += 1
             if e.key == K_UP:
-                y -= 1
-            if e.key == K_DOWN:
                 y += 1
+            if e.key == K_DOWN:
+                y -= 1
