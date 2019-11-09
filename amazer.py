@@ -28,20 +28,16 @@ pygame.display.set_caption("wow thats a mazing")
 def breadth_first():
     maze = blank_sheet()
     ent = randint(0, W-1), randint(0, H-1)
-    ext = randint(0, W-1), randint(0, H-1)
-    while abs(ext[0] - ent[0]) + abs(ext[1] - ent[1]) < (W + H) / 2:
-        ext = randint(0, W-1), randint(0, H-1)
-        ent = randint(0, W-1), randint(0, H-1)
     heads = [ent]
     routes = {ent: [ent]}
     marked = []
-    while heads or ext not in marked:
+    while heads or len(marked) < (W*H)//2:
         if not heads:
             heads.append(choice(marked))
         x, y = heads.pop(0)
         route = routes[(x, y)]
         exits = maze[y][x]
-        debug(maze, (x, y), ext, route=routes[(x, y)])
+        debug(maze, (x, y), ent, route=routes[(x, y)])
         n = choice([2, 2, 3, 4])
         while sum(exits) < n:
             maze[y][x][randint(0, 3)] = 1
@@ -58,23 +54,23 @@ def breadth_first():
                         maze[y][x][d] = 0
                 else: maze[y][x][d] = 0
         marked.append((x, y))
+    ext = ent
+    for route in routes:
+        if len(routes[route]) > len(routes[ext]):
+            ext = route
     return maze, ent, ext, routes[ext]
 
 def depth_first():
     maze = blank_sheet()
     ent = randint(0, W-1), randint(0, H-1)
-    ext = randint(0, W-1), randint(0, H-1)
-    while abs(ext[0] - ent[0]) + abs(ext[1] - ent[1]) < (W + H) / 2:
-        ext = randint(0, W-1), randint(0, H-1)
-        ent = randint(0, W-1), randint(0, H-1)
     heads = [ent]
     routes = {ent: [ent]}
     marked = []
-    while heads or (not ext in marked):
+    while heads or len(marked) < (W*H)//2:
         if not heads:
             heads.append(choice(marked))
         x, y = heads.pop()
-        debug(maze, (x, y), ext, route=routes[(x, y)])
+        debug(maze, (x, y), ent, route=routes[(x, y)])
         route = routes[(x, y)]
         exits = maze[y][x]
 
@@ -94,27 +90,27 @@ def depth_first():
                         maze[y][x][d] = 0
                 else: maze[y][x][d] = 0
         marked.append((x, y))
+    ext = ent
+    for route in routes:
+        if len(routes[route]) > len(routes[ext]):
+            ext = route
     return maze, ent, ext, routes[ext]
 
 def ride_and_shuffle():
     maze = blank_sheet()
     ent = randint(0, W-1), randint(0, H-1)
-    ext = randint(0, W-1), randint(0, H-1)
-    while abs(ext[0] - ent[0]) + abs(ext[1] - ent[1]) < (W + H) / 2:
-        ext = randint(0, W-1), randint(0, H-1)
-        ent = randint(0, W-1), randint(0, H-1)
     heads = [ent]
     routes = {ent: [ent]}
     marked = []
     counter = (W + H) // 3
-    while heads or (not ext in marked):
-        if counter == 0:
-            counter = (W + H) // 3
-            shuffle(heads)
+    while heads or len(marked) < (W*H)//2:
         if not heads:
             heads.append(choice(marked))
+        if counter <= 0:
+            counter = (W + H) // 3
+            shuffle(heads)
         x, y = heads.pop()
-        debug(maze, (x, y), ext, route=routes[(x, y)])
+        debug(maze, (x, y), ent, route=routes[(x, y)])
         route = routes[(x, y)]
         exits = maze[y][x]
 
@@ -137,6 +133,11 @@ def ride_and_shuffle():
                     maze[y][x][d] = 0
                     counter -= 1
         marked.append((x, y))
+    ext = ent
+    for route in routes:
+        if len(routes[route]) > len(routes[ext]):
+            ext = route
+    return maze, ent, ext, routes[ext]
     return maze, ent, ext, routes[ext]
 
 # # # # # # # # # # # # # # # # # # # # #
