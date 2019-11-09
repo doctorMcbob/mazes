@@ -19,7 +19,7 @@ each cell in the array will be four bools representing the four exits of that ce
 PW = 16
 W, H = 40, 40
 
-SCREEN = pygame.display.set_mode((32 * 40, 32 * 20))
+SCREEN = pygame.display.set_mode((32 * 20, 32 * 20))
 pygame.display.set_caption("wow thats a mazing")
 
 
@@ -178,7 +178,7 @@ mazes = [breadth_first(), depth_first()]
 maze, ent, ext, route = mazes.pop(0)
 show = False
 zoom = [8, 16, 32, 64]
-zidx = 2
+zidx = 1
 img = drawn_maze(maze, ent, ext)
 rimg = drawn_maze(maze, ent, ext, route=route )
 while True:
