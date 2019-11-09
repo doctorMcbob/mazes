@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import *
 
-from random import choice, randint
+from random import shuffle, choice, randint
 import sys
 
 pygame.init()
@@ -96,6 +96,49 @@ def depth_first():
         marked.append((x, y))
     return maze, ent, ext, routes[ext]
 
+def ride_and_shuffle():
+    maze = blank_sheet()
+    ent = randint(0, W-1), randint(0, H-1)
+    ext = randint(0, W-1), randint(0, H-1)
+    while abs(ext[0] - ent[0]) + abs(ext[1] - ent[1]) < (W + H) / 2:
+        ext = randint(0, W-1), randint(0, H-1)
+        ent = randint(0, W-1), randint(0, H-1)
+    heads = [ent]
+    routes = {ent: [ent]}
+    marked = []
+    counter = (W + H) // 3
+    while heads or (not ext in marked):
+        if counter == 0:
+            counter = (W + H) // 3
+            shuffle(heads)
+        if not heads:
+            heads.append(choice(marked))
+        x, y = heads.pop()
+        debug(maze, (x, y), ext, route=routes[(x, y)])
+        route = routes[(x, y)]
+        exits = maze[y][x]
+
+        n = choice([2, 2, 3, 4])
+        while sum(exits) < n:
+            maze[y][x][randint(0, 3)] = 1
+
+        for d, check in enumerate(exits):
+            if check:
+                x_, y_ = apply_direction(x, y, d)
+                if x_ >= 0 and y_ >= 0 and x_ < W and y_ < H:
+                    if (x_, y_) not in heads and (x_, y_) not in marked:
+                        maze[y_][x_][(d + 2) % 4] = 1
+                        heads.append((x_, y_))
+                        routes[(x_, y_)] = route + [(x_, y_)]
+                    elif maze[y_][x_][(d + 2) % 4] == 0:
+                        maze[y][x][d] = 0
+                        counter -= 1
+                else:
+                    maze[y][x][d] = 0
+                    counter -= 1
+        marked.append((x, y))
+    return maze, ent, ext, routes[ext]
+
 # # # # # # # # # # # # # # # # # # # # #
 
 def issolvable(maze, ent, ext, no_pass=None, checkless=False):
@@ -174,7 +217,7 @@ def drawn_maze(maze, ent, ext, route=None, lit=False):
 
 ############ MAIN LOOP #############
 x, y = 0, 0
-mazes = [breadth_first(), depth_first()]
+mazes = [breadth_first(), depth_first(), ride_and_shuffle()]
 maze, ent, ext, route = mazes.pop(0)
 show = False
 zoom = [8, 16, 32, 64]
