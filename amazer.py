@@ -14,7 +14,7 @@ making it up as i go
 
 a maze will be a multi dimensional array
 each cell in the array will be four bools representing the four exits of that cell
-[N, E, S, W]
+[N, E, S, W] Never Eat Soggy Waffles syntax
 """
 PW = 16
 W, H = 40, 40
@@ -25,7 +25,7 @@ pygame.display.set_caption("wow thats a mazing")
 
 # ** ** ** ** THE ALGORITHMS ** ** ** **
 # holy cow this is fun
-def breadth_first():
+def breadth_first(show=False):
     maze = blank_sheet()
     ent = randint(0, W-1), randint(0, H-1)
     heads = [ent]
@@ -37,7 +37,7 @@ def breadth_first():
         x, y = heads.pop(0)
         route = routes[(x, y)]
         exits = maze[y][x]
-        debug(maze, (x, y), ent, route=routes[(x, y)])
+        if show: debug(maze, (x, y), ent, route=routes[(x, y)])
         n = choice([2, 2, 3, 4])
         while sum(exits) < n:
             maze[y][x][randint(0, 3)] = 1
@@ -60,7 +60,7 @@ def breadth_first():
             ext = route
     return maze, ent, ext, routes[ext]
 
-def depth_first():
+def depth_first(show=False):
     maze = blank_sheet()
     ent = randint(0, W-1), randint(0, H-1)
     heads = [ent]
@@ -70,7 +70,7 @@ def depth_first():
         if not heads:
             heads.append(choice(marked))
         x, y = heads.pop()
-        debug(maze, (x, y), ent, route=routes[(x, y)])
+        if show: debug(maze, (x, y), ent, route=routes[(x, y)])
         route = routes[(x, y)]
         exits = maze[y][x]
 
@@ -96,7 +96,7 @@ def depth_first():
             ext = route
     return maze, ent, ext, routes[ext]
 
-def ride_and_shuffle():
+def ride_and_shuffle(show=False):
     maze = blank_sheet()
     ent = randint(0, W-1), randint(0, H-1)
     heads = [ent]
@@ -110,7 +110,7 @@ def ride_and_shuffle():
             counter = (W + H) // 3
             shuffle(heads)
         x, y = heads.pop()
-        debug(maze, (x, y), ent, route=routes[(x, y)])
+        if show: debug(maze, (x, y), ent, route=routes[(x, y)])
         route = routes[(x, y)]
         exits = maze[y][x]
 
@@ -216,47 +216,77 @@ def drawn_maze(maze, ent, ext, route=None, lit=False):
                 pygame.draw.rect(surf, col, pygame.rect.Rect((X*PW, Y*PW + 2), (2, PW - 4)))
     return surf
 
-############ MAIN LOOP #############
-x, y = 0, 0
-mazes = [breadth_first(), depth_first(), ride_and_shuffle()]
-maze, ent, ext, route = mazes.pop(0)
-show = False
-zoom = [8, 16, 32, 64]
-zidx = 1
-img = drawn_maze(maze, ent, ext)
-rimg = drawn_maze(maze, ent, ext, route=route )
-while True:
-    if PW != zoom[zidx]:
-        PW = zoom[zidx]
+def demo():
+    x, y = 0, 0
+    mazes = [breadth_first(show=True), depth_first(show=True), ride_and_shuffle(show=True)]
+    maze, ent, ext, route = mazes.pop(0)
+    show = False
+    zoom = [8, 16, 32, 64]
+    zidx = 1
+    img = drawn_maze(maze, ent, ext)
+    rimg = drawn_maze(maze, ent, ext, route=route )
+    while True:
+        if PW != zoom[zidx]:
+            PW = zoom[zidx]
+            img = drawn_maze(maze, ent, ext)
+            rimg = drawn_maze(maze, ent, ext, route=route )
+        SCREEN.fill((0, 0, 0))
+        if show:
+            SCREEN.blit(rimg, (x*PW, y*PW))
+        else:
+            SCREEN.blit(img, (x*PW, y*PW))
+        pygame.display.update()
+        for e in pygame.event.get():
+            if e.type == QUIT: quit()
+            if e.type == KEYDOWN:
+                if e.key == K_RIGHT:
+                    x -= 1
+                if e.key == K_LEFT:
+                    x += 1
+                if e.key == K_UP:
+                    y += 1
+                if e.key == K_DOWN:
+                    y -= 1
+
+                if e.key == K_z:
+                    zidx = (zidx + 1) % 4
+                if e.key == K_x:
+                    zidx = (zidx - 1) % 4
+                    
+                if e.key == K_n:
+                    if not mazes: quit()
+                    maze, ent, ext, route = mazes.pop(0)
+                    img = drawn_maze(maze, ent, ext)
+                    rimg = drawn_maze(maze, ent, ext, route=route )
+                if e.key == K_SPACE:
+                    show = (show + 1) % 2
+
+def solve():
+    mazes = [breadth_first(), depth_first(), ride_and_shuffle()]
+    for maze, ent, ext, route in mazes:
         img = drawn_maze(maze, ent, ext)
-        rimg = drawn_maze(maze, ent, ext, route=route )
-    SCREEN.fill((0, 0, 0))
-    if show:
-        SCREEN.blit(rimg, (x*PW, y*PW))
+        X, Y = ent
+        while (X, Y) != ext:
+            mov = [0, 0]
+            for e in pygame.event.get():
+                if e.type == QUIT: quit()
+                if e.type == KEYDOWN:
+                    if e.key == K_UP: mov[1] -= 1
+                    if e.key == K_DOWN: mov[1] += 1
+                    if e.key == K_LEFT: mov[0] += 1
+                    if e.key == K_RIGHT: mov[0] -= 1
+            if sum(mov):
+                slot = maze[Y][X]
+                if mov[1] < 0 and slot[0]: Y -= 1
+                if mov[1] > 0 and slot[2]: Y += 1
+                if mov[0] > 0 and slot[3]: X -= 1
+                if mov[0] < 0 and slot[1]: X += 1
+            SCREEN.blit(img, (0, 0))
+            pygame.draw.rect(SCREEN, (255, 0, 255), pygame.rect.Rect(((X*PW)+2, (Y*PW)+2), (PW-4, PW-4)))
+            pygame.display.update()
+            
+if __name__ == "__main__":
+    if "-d" in sys.argv:
+        demo()
     else:
-        SCREEN.blit(img, (x*PW, y*PW))
-    pygame.display.update()
-    for e in pygame.event.get():
-        if e.type == QUIT: quit()
-        if e.type == KEYDOWN:
-            if e.key == K_RIGHT:
-                x -= 1
-            if e.key == K_LEFT:
-                x += 1
-            if e.key == K_UP:
-                y += 1
-            if e.key == K_DOWN:
-                y -= 1
-
-            if e.key == K_z:
-                zidx = (zidx + 1) % 4
-            if e.key == K_x:
-                zidx = (zidx - 1) % 4
-
-            if e.key == K_n:
-                if not mazes: quit()
-                maze, ent, ext, route = mazes.pop(0)
-                img = drawn_maze(maze, ent, ext)
-                rimg = drawn_maze(maze, ent, ext, route=route )
-            if e.key == K_SPACE:
-                show = (show + 1) % 2
+        solve()
