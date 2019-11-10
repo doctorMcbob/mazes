@@ -217,6 +217,7 @@ def drawn_maze(maze, ent, ext, route=None, lit=False):
     return surf
 
 def demo():
+    global PW
     x, y = 0, 0
     mazes = [breadth_first(show=True), depth_first(show=True), ride_and_shuffle(show=True)]
     maze, ent, ext, route = mazes.pop(0)
