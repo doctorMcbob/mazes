@@ -17,7 +17,7 @@ each cell in the array will be four bools representing the four exits of that ce
 [N, E, S, W] Never Eat Soggy Waffles syntax
 """
 PW = 32
-W, H = 30, 30
+W, H = 20, 20
 
 SCREEN = pygame.display.set_mode((PW * 20, PW * 20))
 pygame.display.set_caption("wow thats a mazing")
@@ -259,7 +259,7 @@ def solve():
                 if mov[0] > 0 and slot[3]: X -= 1
                 if mov[0] < 0 and slot[1]: X += 1
             SCREEN.fill((0, 0, 0))
-            SCREEN.blit(img, ((((SCREEN.get_height() / PW) // 2) - X) * PW, (((SCREEN.get_height() / PW) // 2) - Y) * PW))
+            SCREEN.blit(img, ((((SCREEN.get_width() / PW) // 2) - X) * PW, (((SCREEN.get_height() / PW) // 2) - Y) * PW))
             rect =  pygame.rect.Rect((((SCREEN.get_width() // PW) // 2) * PW + PW/8, ((SCREEN.get_height() / PW) // 2) * PW + PW/8), (PW-(PW/8)*2, PW-(PW/8)*2))
             pygame.draw.rect(SCREEN, (255, 0, 255), rect)
             pygame.display.update()
