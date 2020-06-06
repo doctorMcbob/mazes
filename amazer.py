@@ -17,7 +17,7 @@ each cell in the array will be four bools representing the four exits of that ce
 [N, E, S, W] Never Eat Soggy Waffles syntax
 """
 PW = 32
-W, H = 20, 20
+W, H = 30, 30
 
 SCREEN = pygame.display.set_mode((PW * 20, PW * 20))
 pygame.display.set_caption("wow thats a mazing")
@@ -266,6 +266,10 @@ def solve():
             
 if __name__ == "__main__":
     if "-d" in sys.argv:
+        flag = True
+        while flag:
+            for e in pygame.event.get():
+                if e.type == KEYDOWN: flag=False
         demo()
     else:
         solve()
